@@ -16,10 +16,10 @@ public class ChangeexcalApplication {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(ChangeexcalApplication.class, args);
 
         Scanner scanner = new Scanner(System.in);
-        System.out.println("请输入读取文件路径:");
-        String readPath = scanner.next();
-        System.out.println("请输入输出文件路径:");
-        String writePath = scanner.next();
+        System.out.println("请输入读取文件路径(输入no采用默认路径):");
+        String readPath = scanner.nextLine();
+        System.out.println("请输入输出文件路径(输入no采用默认路径):");
+        String writePath = scanner.nextLine();
 
         System.out.println("------------------------任务开始,请不要打开读取目录中的文件-----------------------");
 

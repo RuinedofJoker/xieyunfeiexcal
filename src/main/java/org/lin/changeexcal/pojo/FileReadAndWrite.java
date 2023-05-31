@@ -20,10 +20,10 @@ public class FileReadAndWrite {
     private static ThreadLocal<Map<String, Object>> readAndWritePath = new ThreadLocal<>();
 
     public void setReadAndWritePath(String read, String write) {
-        if (StringUtils.isEmpty(read)) {
+        if (StringUtils.isEmpty(read) || read.equals("no")) {
             read = defaultReadPath;
         }
-        if (StringUtils.isEmpty(write)) {
+        if (StringUtils.isEmpty(write) || write.equals("no")) {
             write = defaultWriterPath;
         }
         Map<String, Object> map = readAndWritePath.get();
