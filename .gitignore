@@ -31,3 +31,4 @@ build/
 
 ### VS Code ###
 .vscode/
+!/src/main/resources/excal小工具/把jar包放这里然后双击start.bat运行/**
