@@ -30,8 +30,9 @@ public class ExcalFileReader {
     }
 
     private void getExcalMetaInfo(ExcalMetaInfo excalMetaInfo) {
+        Workbook workbook = null;
         try {
-            Workbook workbook = new XSSFWorkbook(excalMetaInfo.getFile());
+            workbook = new XSSFWorkbook(excalMetaInfo.getFile());
             excalMetaInfo.setSheetInfo(new ArrayList());
 
             List<String> sheetIndexAndName = getSheetIndexAndName(workbook, excalMetaInfo.getExcalEntityClass());
@@ -50,6 +51,13 @@ public class ExcalFileReader {
             throw new RuntimeException(e);
         } catch (InvalidFormatException e) {
             throw new RuntimeException(e);
+        }finally {
+            if (workbook != null) {
+                try {
+                    workbook.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 

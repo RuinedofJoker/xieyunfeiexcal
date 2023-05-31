@@ -1,8 +1,6 @@
 file:
   default:
     reader:
- #     path: C:\Users\61640\Downloads\四川省\阿坝
-      path: C:\temp\四川省\阿坝
+      path: C:\temp\四川省
     writer:
-#      path: C:\Users\61640\Desktop
-      path: C:\temp
+      path: C:\temp\write

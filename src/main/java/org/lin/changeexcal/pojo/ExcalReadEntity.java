@@ -27,6 +27,7 @@ public class ExcalReadEntity {
     private Cell phone;
     @ExcelField(value = "G", name = "婴幼儿姓名")
     private Cell sonName;
+    //小孩身份证号
     @ExcelField(value = "H", name = "出生日期")
     private Cell birthday;
     @ExcelField(value = "I", name = "贫困属性")
@@ -37,6 +38,7 @@ public class ExcalReadEntity {
     private Cell participateBottom;
     @ExcelField(value = "L", name = "审批情况")
     private Cell approvalSituation;
+    //基金会
     @ExcelField(value = "M", name = "审批结果")
     private Cell approvalResult;
     @ExcelField(value = "N", name = "备注")
