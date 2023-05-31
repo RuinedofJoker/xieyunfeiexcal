@@ -6,6 +6,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 @SpringBootApplication
@@ -29,8 +30,10 @@ public class ChangeexcalApplication {
 
         fileService.selectAndGenerateExcalDirs();
 
-        System.out.println("任务完成,按任意键继续...");
-        scanner.next();
+        System.out.println("任务完成,请按回车继续...");
+        try {
+            System.in.read();
+        } catch (IOException e) {}
     }
 
 }
