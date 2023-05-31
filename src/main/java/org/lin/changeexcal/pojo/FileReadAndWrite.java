@@ -2,6 +2,7 @@ package org.lin.changeexcal.pojo;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +20,12 @@ public class FileReadAndWrite {
     private static ThreadLocal<Map<String, Object>> readAndWritePath = new ThreadLocal<>();
 
     public void setReadAndWritePath(String read, String write) {
+        if (StringUtils.isEmpty(read)) {
+            read = defaultReadPath;
+        }
+        if (StringUtils.isEmpty(write)) {
+            write = defaultWriterPath;
+        }
         Map<String, Object> map = readAndWritePath.get();
         if (map == null) {
             map = new HashMap();
