@@ -2,8 +2,10 @@ package org.lin.changeexcal;
 
 import org.lin.changeexcal.pojo.FileReadAndWrite;
 import org.lin.changeexcal.service.FileService;
+import org.lin.changeexcal.view.AppMain;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import java.io.IOException;
@@ -13,6 +15,19 @@ import java.util.Scanner;
 public class ChangeexcalApplication {
 
     public static void main(String[] args) {
+        runInVisualization(args);
+        //runInCmd(args);
+    }
+
+    public static void runInVisualization(String[] args) {
+        SpringApplicationBuilder builder = new SpringApplicationBuilder(ChangeexcalApplication.class);
+        System.setProperty("java.awt.headless", "false");
+        ConfigurableApplicationContext applicationContext = builder.headless(false).run(args);
+
+        applicationContext.getBean(AppMain.class);
+
+    }
+    public static void runInCmd(String[] args) {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(ChangeexcalApplication.class, args);
 
         Scanner scanner = new Scanner(System.in);
