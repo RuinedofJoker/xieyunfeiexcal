@@ -79,7 +79,6 @@
                 <version>${spring-boot.version}</version>
                 <configuration>
                     <mainClass>org.lin.changeexcal.ChangeexcalApplication</mainClass>
-                    <skip>true</skip>
                 </configuration>
                 <executions>
                     <execution>

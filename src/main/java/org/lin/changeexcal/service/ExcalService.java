@@ -1,7 +1,5 @@
 package org.lin.changeexcal.service;
 
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.lin.changeexcal.annotation.ExcelField;
@@ -32,14 +30,25 @@ public class ExcalService {
             new SimpleDateFormat("yyyyMMdd")
     ));
 
+    /**
+     * 读取excal文件生成对象
+     * @param readPath 读取文件路径
+     * @return
+     */
     public ExcalMetaInfo readExcalFile(String readPath) {
         return excalFileReader.readExcalGenerateObject(readPath, ExcalReadEntity.class);
     }
 
+    /**
+     * 根据生成的对象处理并写入文件
+     * @param writePath 写入的路径
+     * @param readMetaInfo
+     */
     public void writeExcalFileByCondition(String writePath, ExcalMetaInfo readMetaInfo) {
 
         List<SheetInfo> sheetsInfo = readMetaInfo.getSheetInfo();
         Workbook workbook = new XSSFWorkbook();
+        CreationHelper helper = workbook.getCreationHelper();
 
         List passEntityList = new ArrayList();
         List noPassEntityList = new ArrayList();
@@ -67,6 +76,8 @@ public class ExcalService {
                     }
                 }
             }
+
+            //处理生日是否复合条件的业务
             readEntity.getBirthday().setCellValue(currentCellDate);
 
             Calendar startTimeCalendar = Calendar.getInstance();
@@ -77,19 +88,38 @@ public class ExcalService {
             startTimeCalendar.add(Calendar.YEAR, -3);
             endTimeCalendar.add(Calendar.MONTH, -6);
 
-            if (!(currentCellDate.before(endTimeCalendar.getTime()) && currentCellDate.after(startTimeCalendar.getTime()))) {
+            if (currentCellDate.after(endTimeCalendar.getTime())) { //0-6周岁 审批情况：0-6周岁推荐母乳喂养  审批结果：未通过
                 readEntity.getApprovalResult().setCellValue("未通过");
+                readEntity.getApprovalSituation().setCellValue("0-6周岁推荐母乳喂养");
                 noPassEntityList.add(readEntity);
                 noPassSheetInfoLen++;
                 try {
                     readEntity.getSerialNumber().setCellValue(noPassSheetInfoLen);
                 }catch (Exception e){}
-            }else {
-                passEntityList.add(readEntity);
-                passSheetInfoLen++;
+            }else if (currentCellDate.before(startTimeCalendar.getTime())) { //3岁以上 审批情况：已满三周岁   审批结果：未通过
+                readEntity.getApprovalResult().setCellValue("未通过");
+                readEntity.getApprovalSituation().setCellValue("已满三周岁");
+                noPassEntityList.add(readEntity);
+                noPassSheetInfoLen++;
                 try {
-                    readEntity.getSerialNumber().setCellValue(passSheetInfoLen);
+                    readEntity.getSerialNumber().setCellValue(noPassSheetInfoLen);
                 }catch (Exception e){}
+            }else { //通过
+                if (!"资料齐全".equals(readEntity.getApprovalSituation().getStringCellValue())) {
+                    readEntity.getApprovalResult().setCellValue("未通过");
+                    readEntity.getApprovalSituation().setCellValue("资料不齐全");
+                    noPassEntityList.add(readEntity);
+                    noPassSheetInfoLen++;
+                    try {
+                        readEntity.getSerialNumber().setCellValue(noPassSheetInfoLen);
+                    }catch (Exception e){}
+                }else {
+                    passEntityList.add(readEntity);
+                    passSheetInfoLen++;
+                    try {
+                        readEntity.getSerialNumber().setCellValue(passSheetInfoLen);
+                    }catch (Exception e){}
+                }
             }
         }
 
@@ -111,7 +141,7 @@ public class ExcalService {
 
         for (int i = 0; i < regexSplit.length; i++) {
             if ("".equals(regexSplit[i])) {
-                regexSplit[i] = currentCalendar.get(Calendar.YEAR) + "年" + (currentCalendar.get(Calendar.MONTH) + 1) + "月";
+                regexSplit[i] = currentCalendar.get(Calendar.YEAR) + "年" + (currentCalendar.get(Calendar.MONTH) + 2) + "月";
             }
         }
         StringBuffer title = new StringBuffer();
@@ -176,13 +206,13 @@ public class ExcalService {
         //通过名单内容
         for (int i = 0; i < passEntityList.size(); i++) {
             Row row = passSheet.createRow(i + 2);
-            copyContentByObject(row, (ExcalReadEntity) passEntityList.get(i));
+            copyContentByObject(row, (ExcalReadEntity) passEntityList.get(i), i, helper);
         }
 
         //未通过名单内容
         for (int i = 0; i < noPassEntityList.size(); i++) {
             Row row = noPassSheet.createRow(i + 2);
-            copyContentByObject(row, (ExcalReadEntity) noPassEntityList.get(i));
+            copyContentByObject(row, (ExcalReadEntity) noPassEntityList.get(i), i, helper);
         }
 
         File writeFile = new File(writePath + "\\" + title + ExcalFileReader.FILE_TYPE);
@@ -214,7 +244,13 @@ public class ExcalService {
         put("M", 12);
         put("N", 13);
     }};
-    private void copyContentByObject(Row row, ExcalReadEntity entity) {
+
+    /**
+     * 将实体类属性填充到excal的行中
+     * @param row
+     * @param entity
+     */
+    private void copyContentByObject(Row row, ExcalReadEntity entity, int index, CreationHelper helper) {
         Field[] fields = entity.getClass().getDeclaredFields();
         Arrays.stream(fields).forEach(field -> {
             field.setAccessible(true);
@@ -222,12 +258,16 @@ public class ExcalService {
             try {
                 Cell cell = (Cell) field.get(entity);
                 CellType cellType = cell.getCellType();
+                CellStyle cellStyle = cell.getCellStyle();
                 if (cellType != null) {
                     if (cellType.toString().equals("STRING")) {
                         row.createCell(valueIndex.get(annotation.value())).setCellValue(cell.getStringCellValue());
                     }else if (cellType.toString().equals("NUMERIC")) {
                         if (DateUtil.isCellDateFormatted(cell)) {
-                            row.createCell(valueIndex.get(annotation.value())).setCellValue(cell.getDateCellValue());
+                            cellStyle.setDataFormat(helper.createDataFormat().getFormat("yyyy/MM/dd"));
+                            Cell currentCell = row.createCell(valueIndex.get(annotation.value()));
+                            currentCell.setCellValue(cell.getDateCellValue());
+                            currentCell.getCellStyle().cloneStyleFrom(cellStyle);
                         }else {
                             row.createCell(valueIndex.get(annotation.value())).setCellValue(cell.getNumericCellValue());
                         }
@@ -238,7 +278,11 @@ public class ExcalService {
                     row.createCell(valueIndex.get(annotation.value())).setCellValue("");
                 }
             } catch (Exception e) {
-                System.out.println(e);
+                if (!annotation.value().equals("A")) {
+                    row.createCell(valueIndex.get(annotation.value())).setCellValue("");
+                }else {
+                    row.createCell(valueIndex.get(annotation.value())).setCellValue(index+1);
+                }
             }
         });
 
